@@ -232,3 +232,19 @@ func (c *VRageClient) GetServerDetails() (*ServerResponse, error) {
 
 	return &resp, nil
 }
+
+// Retrieve the list of planets from the server.
+func (c *VRageClient) GetPlanets() (*PlanetResponse, error) {
+	path := "/v1/session/planets"
+	body, err := c.Request(path, "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	resp := PlanetResponse{}
+	if err = json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}

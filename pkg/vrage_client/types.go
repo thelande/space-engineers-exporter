@@ -39,3 +39,22 @@ type ServerResponse struct {
 	BaseResponse
 	Data ServerResponseData `json:"data"`
 }
+
+type EntityPosition struct {
+	X float64 `json:"X"`
+	Y float64 `json:"Y"`
+	Z float64 `json:"Z"`
+}
+
+type PlanetResponseData struct {
+	DisplayName string         `json:"DisplayName"`
+	EntityId    int64          `json:"EntityId"`
+	Position    EntityPosition `json:"Position"`
+}
+
+type PlanetResponse struct {
+	BaseResponse
+	Data struct {
+		Planets []PlanetResponseData `json:"Planets"`
+	} `json:"data"`
+}

@@ -11,8 +11,6 @@ import (
 
 const namespace = "space_engineers"
 
-var serverInfoLabels = []string{"server_name", "world_name", "version", "server_id"}
-
 func getSEDesc(name string, unit string, help string) *prometheus.Desc {
 	return prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, name, unit), help, nil, nil,
@@ -20,7 +18,8 @@ func getSEDesc(name string, unit string, help string) *prometheus.Desc {
 }
 
 var (
-	serverInfoDesc = prometheus.NewDesc(
+	serverInfoLabels = []string{"server_name", "world_name", "version", "server_id"}
+	serverInfoDesc   = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "info"),
 		"Information about the server.",
 		serverInfoLabels,
@@ -35,6 +34,14 @@ var (
 	simulationSpeedDesc   = getSEDesc("", "simulation_speed", "The simulation speed factor.")
 	pcuUsedDesc           = getSEDesc("pcu_used", "total", "The total number of PCU used.")
 	piratePcuUsedDesc     = getSEDesc("pirate_pcu_used", "total", "The total number of PCU used by pirate factions.")
+
+	planetLabels = []string{"display_name", "entity_id", "x", "y", "z"}
+	planetDesc   = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "planet", "info"),
+		"Information about the planets.",
+		planetLabels,
+		nil,
+	)
 )
 
 type Collector struct {
@@ -57,6 +64,7 @@ func (c Collector) Describe(ch chan<- *prometheus.Desc) {
 		simulationSpeedDesc,
 		pcuUsedDesc,
 		piratePcuUsedDesc,
+		planetDesc,
 	}
 	for i := range metrics {
 		ch <- metrics[i]
@@ -144,6 +152,29 @@ func (c Collector) CollectServerInfo(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+func (c Collector) CollectPlanets(ch chan<- prometheus.Metric) error {
+	resp, err := c.client.GetPlanets()
+	if err != nil {
+		return err
+	}
+
+	for i := range resp.Data.Planets {
+		planet := &resp.Data.Planets[i]
+		ch <- prometheus.MustNewConstMetric(
+			planetDesc,
+			prometheus.GaugeValue,
+			1,
+			planet.DisplayName,
+			fmt.Sprintf("%v", planet.EntityId),
+			fmt.Sprintf("%v", planet.Position.X),
+			fmt.Sprintf("%v", planet.Position.Y),
+			fmt.Sprintf("%v", planet.Position.Z),
+		)
+	}
+
+	return nil
+}
+
 func (c Collector) Collect(ch chan<- prometheus.Metric) {
 	ping, err := c.client.Ping()
 	if err != nil {
@@ -160,6 +191,11 @@ func (c Collector) Collect(ch chan<- prometheus.Metric) {
 
 	if err = c.CollectServerInfo(ch); err != nil {
 		level.Error(c.logger).Log("msg", "Failed to collect server info", "err", err)
+		return
+	}
+
+	if err = c.CollectPlanets(ch); err != nil {
+		level.Error(c.logger).Log("msg", "Failed to collect planet info", "err", err)
 		return
 	}
 }
