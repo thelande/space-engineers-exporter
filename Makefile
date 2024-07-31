@@ -10,19 +10,19 @@ help: ## Show this help message.
 
 include Makefile.common
 
-BIN ?= go_exporter_tmpl
+BIN ?= space_engineers_exporter
 
-PROMTOOL_VERSION ?= 2.51.0
+PROMTOOL_VERSION ?= 2.53.1
 PROMTOOL_URL     ?= https://github.com/prometheus/prometheus/releases/download/v$(PROMTOOL_VERSION)/prometheus-$(PROMTOOL_VERSION).$(GO_BUILD_PLATFORM).tar.gz
 PROMTOOL         ?= $(FIRST_GOPATH)/bin/promtool
 
 DOCKER_IMAGE_NAME       ?= $(BIN)
 MACH                    ?= $(shell uname -m)
 
-ifeq($(MACH),x86_64)
+ifeq ($(MACH),x86_64)
 ARCH := amd64
 else
-ifeq($(MACH),aarch64)
+ifeq ($(MACH),aarch64)
 ARCH := arm64
 endif
 endif
@@ -33,7 +33,7 @@ PROMU_CONF := .promu.yml
 PROMU := $(FIRST_GOPATH)/bin/promu --config $(PROMU_CONF)
 
 .PHONY: build
-build: promu $(BIN)
+build: promu $(BIN)  ## Build the exporter
 $(BIN): *.go
 	$(PROMU) build --prefix=output
 

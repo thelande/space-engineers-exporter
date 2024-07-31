@@ -17,8 +17,8 @@ LABEL maintainer="Tom Helander <thomas.helander@gmail.com>"
 
 WORKDIR /app
 
-COPY --from=builder /src/go_exporter_tmpl .
+COPY --from=builder /src/space_engineers_exporter .
 
 EXPOSE 9810
 
-ENTRYPOINT ["/app/go_exporter_tmpl"]
+ENTRYPOINT ["/app/space_engineers_exporter"]

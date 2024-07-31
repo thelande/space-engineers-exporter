@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -23,7 +24,8 @@ import (
 	kingpin "github.com/alecthomas/kingpin/v2"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/thelande/go_exporter_tmpl/pkg/collector"
+	"github.com/thelande/space-engineers-exporter/pkg/collector"
+	client "github.com/thelande/space-engineers-exporter/pkg/vrage_client"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -35,16 +37,36 @@ import (
 )
 
 const (
-	exporterName  = "go_exporter_tmpl"
-	exporterTitle = "Go Exporter Template"
+	exporterName  = "space_engineers_exporter"
+	exporterTitle = "Space Engineers Dedicated Server Exporter"
 )
 
 var (
+	api = kingpin.Flag(
+		"remote-api.url",
+		"URL of the remote API",
+	).Default("http://127.0.0.1:8080").String()
+
+	key = kingpin.Flag(
+		"remote-api.key",
+		"The secret key used to communicate with the remote API.",
+	).Envar("SE_REMOTE_API_KEY").String()
+
+	keyFile = kingpin.Flag(
+		"remote-api.key-file",
+		"Path of the file containing the remote API secret key.",
+	).Envar("SE_REMOTE_API_KEY_FILE").String()
+
+	sslVerify = kingpin.Flag(
+		"remote-api.ssl-verify",
+		"Verify the remote API SSL certificate, when true.",
+	).Default("true").Bool()
+
 	metricsPath = kingpin.Flag(
 		"web.telemetry-path",
 		"Path under which to expose metrics.",
 	).Default("/metrics").String()
-	webConfig = webflag.AddFlags(kingpin.CommandLine, ":9810")
+	webConfig = webflag.AddFlags(kingpin.CommandLine, ":9815")
 	logger    log.Logger
 )
 
@@ -60,7 +82,17 @@ func main() {
 	level.Info(logger).Log("msg", fmt.Sprintf("Starting %s", exporterName), "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 
-	collector := collector.Collector{}
+	client, err := client.NewVRageClient(*api, *keyFile, *key, *sslVerify, &logger)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			level.Error(logger).Log("msg", "Secret key file not found", "path", *keyFile)
+		} else {
+			level.Error(logger).Log("msg", "Unknown error occurred while creating VRage client", "err", err)
+		}
+		os.Exit(1)
+	}
+
+	collector := collector.NewCollector(client, logger)
 
 	// Uncomment the following two lines and comment out prometheus.MustRegister(collector)
 	// to exclude the go metrics. Make sure to swap line 88 and 89 as well.
@@ -70,7 +102,7 @@ func main() {
 
 	landingConfig := web.LandingConfig{
 		Name:        exporterTitle,
-		Description: "Prometheus go-based Exporter",
+		Description: "Prometheus Space Engineers Dedicated Server Exporter",
 		Version:     version.Info(),
 		Links: []web.LandingLinks{
 			{
