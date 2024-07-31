@@ -248,3 +248,19 @@ func (c *VRageClient) GetPlanets() (*PlanetResponse, error) {
 
 	return &resp, nil
 }
+
+// Retrieve the list of asteroids from the server.
+func (c *VRageClient) GetAsteroids() (*AsteroidResponse, error) {
+	path := "/v1/session/asteroids"
+	body, err := c.Request(path, "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	resp := AsteroidResponse{}
+	if err = json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}

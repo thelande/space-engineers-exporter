@@ -58,3 +58,16 @@ type PlanetResponse struct {
 		Planets []PlanetResponseData `json:"Planets"`
 	} `json:"data"`
 }
+
+type AsteroidResponseData struct {
+	DisplayName string         `json:"DisplayName"`
+	EntityId    int64          `json:"EntityId"`
+	Position    EntityPosition `json:"Position"`
+}
+
+type AsteroidResponse struct {
+	BaseResponse
+	Data struct {
+		Asteroids []AsteroidResponseData `json:"Asteroids"`
+	} `json:"data"`
+}

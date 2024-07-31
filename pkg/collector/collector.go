@@ -42,6 +42,12 @@ var (
 		planetLabels,
 		nil,
 	)
+	asteroidDesc = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "asteroid", "info"),
+		"Information about the fixed asteroids.",
+		planetLabels,
+		nil,
+	)
 )
 
 type Collector struct {
@@ -65,6 +71,7 @@ func (c Collector) Describe(ch chan<- *prometheus.Desc) {
 		pcuUsedDesc,
 		piratePcuUsedDesc,
 		planetDesc,
+		asteroidDesc,
 	}
 	for i := range metrics {
 		ch <- metrics[i]
@@ -175,6 +182,29 @@ func (c Collector) CollectPlanets(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+func (c Collector) CollectAsteroids(ch chan<- prometheus.Metric) error {
+	resp, err := c.client.GetAsteroids()
+	if err != nil {
+		return err
+	}
+
+	for i := range resp.Data.Asteroids {
+		asteroid := &resp.Data.Asteroids[i]
+		ch <- prometheus.MustNewConstMetric(
+			asteroidDesc,
+			prometheus.GaugeValue,
+			1,
+			asteroid.DisplayName,
+			fmt.Sprintf("%v", asteroid.EntityId),
+			fmt.Sprintf("%v", asteroid.Position.X),
+			fmt.Sprintf("%v", asteroid.Position.Y),
+			fmt.Sprintf("%v", asteroid.Position.Z),
+		)
+	}
+
+	return nil
+}
+
 func (c Collector) Collect(ch chan<- prometheus.Metric) {
 	ping, err := c.client.Ping()
 	if err != nil {
@@ -196,6 +226,11 @@ func (c Collector) Collect(ch chan<- prometheus.Metric) {
 
 	if err = c.CollectPlanets(ch); err != nil {
 		level.Error(c.logger).Log("msg", "Failed to collect planet info", "err", err)
+		return
+	}
+
+	if err = c.CollectAsteroids(ch); err != nil {
+		level.Error(c.logger).Log("msg", "Failed to collect asteroid info", "err", err)
 		return
 	}
 }
