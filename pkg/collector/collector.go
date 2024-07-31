@@ -11,43 +11,33 @@ import (
 
 const namespace = "space_engineers"
 
-func getSEDesc(name string, unit string, help string) *prometheus.Desc {
+func getSEDesc(name string, unit string, help string, labels []string) *prometheus.Desc {
 	return prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, name, unit), help, nil, nil,
+		prometheus.BuildFQName(namespace, name, unit), help, labels, nil,
 	)
 }
 
 var (
 	serverInfoLabels = []string{"server_name", "world_name", "version", "server_id"}
-	serverInfoDesc   = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "info"),
-		"Information about the server.",
-		serverInfoLabels,
-		nil,
-	)
 
-	upDesc                = getSEDesc("", "up", "Did the remote API respond to the queries.")
-	readyDesc             = getSEDesc("", "ready", "Is the server ready?")
-	upTimeDesc            = getSEDesc("up", "seconds", "The number of seconds that the server has been up.")
-	playerCountDesc       = getSEDesc("player", "count", "The number of players currently connected to the server.")
-	simulationCpuLoadDesc = getSEDesc("simulation_cpu_load", "percent", "The simulation thread CPU load.")
-	simulationSpeedDesc   = getSEDesc("", "simulation_speed", "The simulation speed factor.")
-	pcuUsedDesc           = getSEDesc("pcu_used", "total", "The total number of PCU used.")
-	piratePcuUsedDesc     = getSEDesc("pirate_pcu_used", "total", "The total number of PCU used by pirate factions.")
+	upDesc                = getSEDesc("", "up", "Did the remote API respond to the queries.", nil)
+	serverInfoDesc        = getSEDesc("", "info", "Information about the server", serverInfoLabels)
+	readyDesc             = getSEDesc("", "ready", "Is the server ready?", nil)
+	upTimeDesc            = getSEDesc("up", "seconds", "The number of seconds that the server has been up.", nil)
+	playerCountDesc       = getSEDesc("player", "count", "The number of players currently connected to the server.", nil)
+	simulationCpuLoadDesc = getSEDesc("simulation_cpu_load", "percent", "The simulation thread CPU load.", nil)
+	simulationSpeedDesc   = getSEDesc("", "simulation_speed", "The simulation speed factor.", nil)
+	pcuUsedDesc           = getSEDesc("pcu_used", "total", "The total number of PCU used.", nil)
+	piratePcuUsedDesc     = getSEDesc("pirate_pcu_used", "total", "The total number of PCU used by pirate factions.", nil)
 
 	planetLabels = []string{"display_name", "entity_id", "x", "y", "z"}
-	planetDesc   = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "planet", "info"),
-		"Information about the planets.",
-		planetLabels,
-		nil,
-	)
-	asteroidDesc = prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "asteroid", "info"),
-		"Information about the fixed asteroids.",
-		planetLabels,
-		nil,
-	)
+	planetDesc   = getSEDesc("planet", "info", "Information about the planets.", planetLabels)
+	asteroidDesc = getSEDesc("asteroid", "info", "Information about the fixed asteroids.", planetLabels)
+
+	gridLabels    = []string{"powered", "grid_size"}
+	pcuLabels     = []string{"powered", "grid_size", "owner"}
+	gridCountDesc = getSEDesc("grid", "count", "The number of grids on the server.", gridLabels)
+	pcuCountDesc  = getSEDesc("pcu", "count", "The number of PCUs used on the server.", pcuLabels)
 )
 
 type Collector struct {
@@ -72,6 +62,8 @@ func (c Collector) Describe(ch chan<- *prometheus.Desc) {
 		piratePcuUsedDesc,
 		planetDesc,
 		asteroidDesc,
+		gridCountDesc,
+		pcuCountDesc,
 	}
 	for i := range metrics {
 		ch <- metrics[i]
@@ -205,6 +197,60 @@ func (c Collector) CollectAsteroids(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+func (c Collector) CollectGrids(ch chan<- prometheus.Metric) error {
+	resp, err := c.client.GetGrids()
+	if err != nil {
+		return err
+	}
+
+	owners := make(map[string]bool)
+	for i := range resp.Data.Grids {
+		grid := &resp.Data.Grids[i]
+		if ok := owners[grid.OwnerDisplayName]; !ok {
+			owners[grid.OwnerDisplayName] = true
+		}
+	}
+
+	for _, powered := range []bool{true, false} {
+		for _, size := range []string{"Large", "Small"} {
+			count := 0
+			for i := range resp.Data.Grids {
+				grid := &resp.Data.Grids[i]
+				if grid.IsPowered == powered && grid.GridSize == size {
+					count++
+				}
+			}
+			ch <- prometheus.MustNewConstMetric(
+				gridCountDesc,
+				prometheus.GaugeValue,
+				float64(count),
+				fmt.Sprintf("%v", powered),
+				size,
+			)
+
+			for owner, _ := range owners {
+				count = 0
+				for i := range resp.Data.Grids {
+					grid := &resp.Data.Grids[i]
+					if grid.IsPowered == powered && grid.GridSize == size && grid.OwnerDisplayName == owner {
+						count += int(grid.PCU)
+					}
+				}
+				ch <- prometheus.MustNewConstMetric(
+					pcuCountDesc,
+					prometheus.GaugeValue,
+					float64(count),
+					fmt.Sprintf("%v", powered),
+					size,
+					owner,
+				)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c Collector) Collect(ch chan<- prometheus.Metric) {
 	ping, err := c.client.Ping()
 	if err != nil {
@@ -231,6 +277,11 @@ func (c Collector) Collect(ch chan<- prometheus.Metric) {
 
 	if err = c.CollectAsteroids(ch); err != nil {
 		level.Error(c.logger).Log("msg", "Failed to collect asteroid info", "err", err)
+		return
+	}
+
+	if err = c.CollectGrids(ch); err != nil {
+		level.Error(c.logger).Log("msg", "Failed to collect grid info", "err", err)
 		return
 	}
 }

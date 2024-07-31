@@ -71,3 +71,25 @@ type AsteroidResponse struct {
 		Asteroids []AsteroidResponseData `json:"Asteroids"`
 	} `json:"data"`
 }
+
+type GridResponseData struct {
+	DisplayName      string         `json:"DisplayName"`
+	EntityId         int64          `json:"EntityId"`
+	GridSize         string         `json:"GridSize"`
+	BlocksCount      uint           `json:"BlocksCount"`
+	Mass             float64        `json:"Mass"`
+	Position         EntityPosition `json:"Position"`
+	LinearSpeed      float64        `json:"LinearSpeed"`
+	DistanceToPlayer float64        `json:"DistanceToPlayer"`
+	OwnerSteamId     uint64         `json:"OwnerSteamId"`
+	OwnerDisplayName string         `json:"OwnerDisplayName"`
+	IsPowered        bool           `json:"IsPowered"`
+	PCU              uint           `json:"PCU"`
+}
+
+type GridResponse struct {
+	BaseResponse
+	Data struct {
+		Grids []GridResponseData `json:"Grids"`
+	} `json:"data"`
+}
