@@ -255,7 +255,7 @@ func (c Collector) Collect(ch chan<- prometheus.Metric) {
 	ping, err := c.client.Ping()
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Failed to ping remote API", "err", err)
-		return
+		ping = false
 	}
 
 	c.SetUp(ch, ping)
