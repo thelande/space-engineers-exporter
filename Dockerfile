@@ -19,6 +19,6 @@ WORKDIR /app
 
 COPY --from=builder /src/space_engineers_exporter .
 
-EXPOSE 9810
+EXPOSE 9815
 
 ENTRYPOINT ["/app/space_engineers_exporter"]
