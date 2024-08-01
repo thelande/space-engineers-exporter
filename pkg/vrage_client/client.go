@@ -269,3 +269,36 @@ func (c *VRageClient) GetGrids() (*GridResponse, error) {
 
 	return &resp, nil
 }
+
+// Retrieve the list of banned players.
+func (c *VRageClient) GetBannedPlayers() (*BannedPlayersResponse, error) {
+	path := "/v1/admin/bannedPlayers"
+	resp := BannedPlayersResponse{}
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
+	}
+
+	return &resp, nil
+}
+
+// Retrieve the list of kicked players.
+func (c *VRageClient) GetKickedPlayers() (*KickedPlayersResponse, error) {
+	path := "/v1/admin/kickedPlayers"
+	resp := KickedPlayersResponse{}
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
+	}
+
+	return &resp, nil
+}
+
+// Retrieve the list of cheaters.
+func (c *VRageClient) GetCheaters() (*CheatersResponse, error) {
+	path := "/v1/admin/cheaters"
+	resp := CheatersResponse{}
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
+	}
+
+	return &resp, nil
+}

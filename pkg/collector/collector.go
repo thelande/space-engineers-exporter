@@ -38,6 +38,10 @@ var (
 	pcuLabels     = []string{"powered", "grid_size", "owner"}
 	gridCountDesc = getSEDesc("grid", "count", "The number of grids on the server.", gridLabels)
 	pcuCountDesc  = getSEDesc("pcu", "count", "The number of PCUs used on the server.", pcuLabels)
+
+	bannedPlayersDesc = getSEDesc("banned_player", "count", "The number of banned players.", nil)
+	kickedPlayersDesc = getSEDesc("kicked_player", "count", "The number of kicked players.", nil)
+	cheatersDesc      = getSEDesc("cheaters", "count", "The number of players marked as cheaters.", nil)
 )
 
 type Collector struct {
@@ -64,6 +68,9 @@ func (c Collector) Describe(ch chan<- *prometheus.Desc) {
 		asteroidDesc,
 		gridCountDesc,
 		pcuCountDesc,
+		bannedPlayersDesc,
+		kickedPlayersDesc,
+		cheatersDesc,
 	}
 	for i := range metrics {
 		ch <- metrics[i]
@@ -251,6 +258,40 @@ func (c Collector) CollectGrids(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+func (c Collector) CollectPlayers(ch chan<- prometheus.Metric) error {
+	banned, err := c.client.GetBannedPlayers()
+	if err != nil {
+		return err
+	}
+	ch <- prometheus.MustNewConstMetric(
+		bannedPlayersDesc,
+		prometheus.GaugeValue,
+		float64(len(banned.Data.BannedPlayers)),
+	)
+
+	kicked, err := c.client.GetKickedPlayers()
+	if err != nil {
+		return err
+	}
+	ch <- prometheus.MustNewConstMetric(
+		kickedPlayersDesc,
+		prometheus.GaugeValue,
+		float64(len(kicked.Data.KickedPlayers)),
+	)
+
+	cheaters, err := c.client.GetCheaters()
+	if err != nil {
+		return err
+	}
+	ch <- prometheus.MustNewConstMetric(
+		cheatersDesc,
+		prometheus.GaugeValue,
+		float64(len(cheaters.Data.Cheaters)),
+	)
+
+	return nil
+}
+
 func (c Collector) Collect(ch chan<- prometheus.Metric) {
 	ping, err := c.client.Ping()
 	if err != nil {
@@ -282,6 +323,11 @@ func (c Collector) Collect(ch chan<- prometheus.Metric) {
 
 	if err = c.CollectGrids(ch); err != nil {
 		level.Error(c.logger).Log("msg", "Failed to collect grid info", "err", err)
+		return
+	}
+
+	if err = c.CollectPlayers(ch); err != nil {
+		level.Error(c.logger).Log("msg", "Failed to collect banned player count", "err", err)
 		return
 	}
 }

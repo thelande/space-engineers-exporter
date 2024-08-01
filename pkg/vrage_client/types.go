@@ -102,7 +102,29 @@ type PlayerResponseData struct {
 type BannedPlayersResponse struct {
 	BaseResponse
 	Data struct {
-		BannedPlayers []PlanetResponseData `json:"BannedPlayers"`
+		BannedPlayers []PlayerResponseData `json:"BannedPlayers"`
+	} `json:"data"`
+}
+
+type KickedPlayersResponse struct {
+	BaseResponse
+	Data struct {
+		KickedPlayers []PlayerResponseData `json:"KickedPlayers"`
+	} `json:"data"`
+}
+
+type CheaterResponseData struct {
+	Explanation    string `json:"Explanation"`
+	Id             int    `json:"Id"`
+	Name           string `json:"Name"`
+	PlayerId       uint64 `json:"PlayerId"`
+	ServerDateTime string `json:"ServerDateTime"`
+}
+
+type CheatersResponse struct {
+	BaseResponse
+	Data struct {
+		Cheaters []CheaterResponseData `json:"Cheaters"`
 	} `json:"data"`
 }
 
@@ -113,5 +135,7 @@ type Response interface {
 		PlanetResponse |
 		AsteroidResponse |
 		GridResponse |
-		BannedPlayersResponse
+		BannedPlayersResponse |
+		KickedPlayersResponse |
+		CheatersResponse
 }
