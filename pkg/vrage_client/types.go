@@ -93,3 +93,25 @@ type GridResponse struct {
 		Grids []GridResponseData `json:"Grids"`
 	} `json:"data"`
 }
+
+type PlayerResponseData struct {
+	SteamID     uint64 `json:"SteamID"`
+	DisplayName string `json:"DisplayName"`
+}
+
+type BannedPlayersResponse struct {
+	BaseResponse
+	Data struct {
+		BannedPlayers []PlanetResponseData `json:"BannedPlayers"`
+	} `json:"data"`
+}
+
+// Union of all response types
+type Response interface {
+	PingResponse |
+		ServerResponse |
+		PlanetResponse |
+		AsteroidResponse |
+		GridResponse |
+		BannedPlayersResponse
+}

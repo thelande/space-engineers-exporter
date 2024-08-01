@@ -201,16 +201,25 @@ func (c *VRageClient) Request(path string, method string) ([]byte, error) {
 	return body, nil
 }
 
+// Perform a GET request against the API and populate the provided response object.
+func doBasicGet[R Response](c *VRageClient, path string, resp *R) error {
+	body, err := c.Request(path, "GET")
+	if err != nil {
+		return err
+	}
+
+	if err = json.Unmarshal(body, &resp); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Pings the server and returns true if we received a pong, false otherwise.
 func (c *VRageClient) Ping() (bool, error) {
 	path := "/v1/server/ping"
-	body, err := c.Request(path, "GET")
-	if err != nil {
-		return false, err
-	}
-
 	resp := PingResponse{}
-	if err = json.Unmarshal(body, &resp); err != nil {
+	if err := doBasicGet(c, path, &resp); err != nil {
 		return false, err
 	}
 
@@ -220,14 +229,9 @@ func (c *VRageClient) Ping() (bool, error) {
 // Collect and return the server details.
 func (c *VRageClient) GetServerDetails() (*ServerResponse, error) {
 	path := "/v1/server"
-	body, err := c.Request(path, "GET")
-	if err != nil {
-		return nil, err
-	}
-
 	resp := ServerResponse{}
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return nil, err
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
 	}
 
 	return &resp, nil
@@ -236,14 +240,9 @@ func (c *VRageClient) GetServerDetails() (*ServerResponse, error) {
 // Retrieve the list of planets from the server.
 func (c *VRageClient) GetPlanets() (*PlanetResponse, error) {
 	path := "/v1/session/planets"
-	body, err := c.Request(path, "GET")
-	if err != nil {
-		return nil, err
-	}
-
 	resp := PlanetResponse{}
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return nil, err
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
 	}
 
 	return &resp, nil
@@ -252,14 +251,9 @@ func (c *VRageClient) GetPlanets() (*PlanetResponse, error) {
 // Retrieve the list of asteroids from the server.
 func (c *VRageClient) GetAsteroids() (*AsteroidResponse, error) {
 	path := "/v1/session/asteroids"
-	body, err := c.Request(path, "GET")
-	if err != nil {
-		return nil, err
-	}
-
 	resp := AsteroidResponse{}
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return nil, err
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
 	}
 
 	return &resp, nil
@@ -268,14 +262,9 @@ func (c *VRageClient) GetAsteroids() (*AsteroidResponse, error) {
 // Retrieve the list of grids from the server.
 func (c *VRageClient) GetGrids() (*GridResponse, error) {
 	path := "/v1/session/grids"
-	body, err := c.Request(path, "GET")
-	if err != nil {
-		return nil, err
-	}
-
 	resp := GridResponse{}
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return nil, err
+	if err := doBasicGet(c, path, &resp); err != nil {
+		return &resp, err
 	}
 
 	return &resp, nil
