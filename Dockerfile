@@ -17,7 +17,7 @@ LABEL maintainer="Tom Helander <thomas.helander@gmail.com>"
 
 WORKDIR /app
 
-COPY --from=builder /src/space_engineers_exporter .
+COPY --from=builder /src/output/space_engineers_exporter .
 
 EXPOSE 9815
 
