@@ -24,7 +24,7 @@ type PingResponse struct {
 type ServerResponseData struct {
 	IsReady           bool    `json:"IsReady"`
 	PirateUsedPCU     uint    `json:"PirateUsedPCU"`
-	Players           uint    `json:"Players"`
+	Players           int     `json:"Players"`
 	ServerId          uint64  `json:"ServerId"`
 	ServerName        string  `json:"ServerName"`
 	SimSpeed          float64 `json:"SimSpeed"`
