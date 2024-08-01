@@ -25,7 +25,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/thelande/space-engineers-exporter/pkg/collector"
-	client "github.com/thelande/space-engineers-exporter/pkg/vrage_client"
+	vrage_client "github.com/thelande/space-engineers-exporter/pkg/vrage_client"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -82,7 +82,7 @@ func main() {
 	level.Info(logger).Log("msg", fmt.Sprintf("Starting %s", exporterName), "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 
-	client, err := client.NewVRageClient(*api, *keyFile, *key, *sslVerify, &logger)
+	client, err := vrage_client.NewVRageClient(*api, *keyFile, *key, *sslVerify, &logger)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			level.Error(logger).Log("msg", "Secret key file not found", "path", *keyFile)
