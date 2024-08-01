@@ -2,8 +2,11 @@ package client
 
 import "errors"
 
-var ErrNoKeySpecified = errors.New("no secret key was specified")
-var ErrNon2XXResponse = errors.New("received non 2XX status code")
+var (
+	ErrNoKeySpecified = errors.New("no secret key was specified")
+	ErrNon2XXResponse = errors.New("received non 2XX status code")
+	ErrNotImplemented = errors.New("not implemented")
+)
 
 type BaseResponse struct {
 	Meta struct {
@@ -128,6 +131,13 @@ type CheatersResponse struct {
 	} `json:"data"`
 }
 
+type FloatingObjectsResponse struct {
+	BaseResponse
+	Data struct {
+		FloatingObjects []interface{} `json:"FloatingObjects"`
+	} `json:"data"`
+}
+
 // Union of all response types
 type Response interface {
 	PingResponse |
@@ -137,5 +147,6 @@ type Response interface {
 		GridResponse |
 		BannedPlayersResponse |
 		KickedPlayersResponse |
-		CheatersResponse
+		CheatersResponse |
+		FloatingObjectsResponse
 }

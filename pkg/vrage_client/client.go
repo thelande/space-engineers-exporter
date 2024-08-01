@@ -302,3 +302,17 @@ func (c *VRageClient) GetCheaters() (*CheatersResponse, error) {
 
 	return &resp, nil
 }
+
+// Retrieve the list of floating objects.
+func (c *VRageClient) GetFloatingObjects() (*FloatingObjectsResponse, error) {
+	return nil, ErrNotImplemented
+	/*
+		path := "/v1/session/floatingObjects"
+		resp := FloatingObjectsResponse{}
+		if err := doBasicGet(c, path, &resp); err != nil {
+			return &resp, err
+		}
+
+		return &resp, nil
+	*/
+}
