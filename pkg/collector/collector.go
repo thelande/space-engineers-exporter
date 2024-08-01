@@ -228,7 +228,7 @@ func (c Collector) CollectGrids(ch chan<- prometheus.Metric) error {
 				size,
 			)
 
-			for owner, _ := range owners {
+			for owner := range owners {
 				count = 0
 				for i := range resp.Data.Grids {
 					grid := &resp.Data.Grids[i]
