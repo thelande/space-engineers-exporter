@@ -22,3 +22,6 @@ go.work
 
 # Output directory
 output/
+
+# Debug binaries from vscode
+__debug_bin*
